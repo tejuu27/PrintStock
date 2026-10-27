@@ -25,15 +25,18 @@ const { protect, authorizeRoles } = require("./middleware/auth.middleware");
 
 const app = express();
 
+
 app.use(
     cors({
         origin: [
             "http://localhost:5173",
             "http://localhost:5174",
+            "https://print-stock-oq7rt7k3a-tejuu27s-projects.vercel.app",
         ],
         credentials: true,
     })
 );
+
 
 app.use(express.json());
 
