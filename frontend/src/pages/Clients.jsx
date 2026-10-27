@@ -1,7 +1,9 @@
 
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "https://printstock.onrender.com/api";
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "https://printstock.onrender.com/api";
 
 async function apiFetch(url, options = {}) {
     const token = localStorage.getItem("printstock_token");
@@ -19,7 +21,12 @@ async function apiFetch(url, options = {}) {
         },
     });
 
-    const data = await response.json();
+    let data;
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("Invalid server response. Please try again.");
+    }
 
     if (response.status === 401) {
         localStorage.removeItem("printstock_token");
@@ -35,11 +42,9 @@ async function apiFetch(url, options = {}) {
     return data;
 }
 
-
 function Clients() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
-
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -66,7 +71,7 @@ function Clients() {
             setLoading(true);
             setError("");
 
-            const data = await apiFetch(API);
+            const data = await apiFetch(API_URL);
             setClients(data.clients || []);
         } catch (err) {
             setError(err.message || "Failed to load clients.");
@@ -89,92 +94,91 @@ function Clients() {
     }
 
     async function handleSubmit(event) {
-    event.preventDefault();
+        event.preventDefault();
 
-    try {
-        setSaving(true);
-        setError("");
-        setSuccess("");
+        try {
+            setSaving(true);
+            setError("");
+            setSuccess("");
 
-        const data = await apiFetch(API, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(form),
-        });
+            await apiFetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(form),
+            });
 
-        setSuccess("Client saved successfully!");
+            setSuccess("Client saved successfully!");
 
-        setForm({
-            name: "",
-            type: "",
-            phone: "",
-            address: "",
-        });
+            setForm({
+                name: "",
+                type: "",
+                phone: "",
+                address: "",
+            });
 
-        await fetchClients();
-        setShowAddForm(false);
-    } catch (err) {
-        setError(err.message || "Could not save the client.");
-    } finally {
-        setSaving(false);
+            setShowAddForm(false);
+            await fetchClients();
+        } catch (err) {
+            setError(err.message || "Could not save the client.");
+        } finally {
+            setSaving(false);
+        }
     }
-}
 
     async function fetchClientHistory(event) {
-    if (event) {
-        event.preventDefault();
-    }
+        if (event) event.preventDefault();
 
-    if (!selectedClient) {
-        setError("Please select a client first.");
-        return;
-    }
-
-    if (
-        historyPeriod === "custom" &&
-        (!historyStart || !historyEnd)
-    ) {
-        setError("Please select both the start and end dates.");
-        return;
-    }
-
-    if (
-        historyPeriod === "custom" &&
-        historyStart > historyEnd
-    ) {
-        setError("The start date cannot be after the end date.");
-        return;
-    }
-
-    try {
-        setHistoryLoading(true);
-        setError("");
-        setHistory([]);
-        setHistorySearched(false);
-
-        const params = new URLSearchParams({
-            period: historyPeriod,
-        });
-
-        if (historyPeriod === "custom") {
-            params.set("start", historyStart);
-            params.set("end", historyEnd);
+        if (!selectedClient) {
+            setError("Please select a client first.");
+            return;
         }
 
-        const data = await apiFetch(
-            `${API}/${selectedClient}/history?${params.toString()}`
-        );
+        if (
+            historyPeriod === "custom" &&
+            (!historyStart || !historyEnd)
+        ) {
+            setError("Please select both the start and end dates.");
+            return;
+        }
 
-        setHistory(data.history || []);
-        setHistorySearched(true);
-    } catch (err) {
-        setError(err.message || "Could not load client history.");
-    } finally {
-        setHistoryLoading(false);
+        if (
+            historyPeriod === "custom" &&
+            historyStart > historyEnd
+        ) {
+            setError("The start date cannot be after the end date.");
+            return;
+        }
+
+        try {
+            setHistoryLoading(true);
+            setError("");
+            setHistory([]);
+            setHistorySearched(false);
+
+            const params = new URLSearchParams({
+                period: historyPeriod,
+            });
+
+            if (historyPeriod === "custom") {
+                params.set("start", historyStart);
+                params.set("end", historyEnd);
+            }
+
+            const data = await apiFetch(
+                `${API_URL}/${selectedClient}/history?${params.toString()}`
+            );
+
+            setHistory(data.history || []);
+            setHistorySearched(true);
+        } catch (err) {
+            setError(err.message || "Could not load client history.");
+        } finally {
+            setHistoryLoading(false);
+        }
     }
-}
+
     function handlePeriodChange(event) {
         setHistoryPeriod(event.target.value);
         setHistoryStart("");
@@ -198,7 +202,10 @@ function Clients() {
     }
 
     function getProductName(transaction) {
-        if (transaction.product && typeof transaction.product === "object") {
+        if (
+            transaction.product &&
+            typeof transaction.product === "object"
+        ) {
             return transaction.product.name || "Unknown material";
         }
 
@@ -220,9 +227,7 @@ function Clients() {
                         <span className="eyebrow">
                             CUSTOMER MANAGEMENT
                         </span>
-
                         <h2>Clients</h2>
-
                         <p>
                             Manage your printing customers and review
                             their activity.
@@ -272,17 +277,11 @@ function Clients() {
                 {showAddForm && (
                     <section className="dashboard-card">
                         <h3>Add New Client</h3>
-
-                        <p>
-                            Enter the details of the customer you work with.
-                        </p>
+                        <p>Enter the details of the customer you work with.</p>
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
-                                <label htmlFor="clientName">
-                                    Client Name
-                                </label>
-
+                                <label htmlFor="clientName">Client Name</label>
                                 <input
                                     id="clientName"
                                     name="name"
@@ -294,10 +293,7 @@ function Clients() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="clientType">
-                                    Client Type
-                                </label>
-
+                                <label htmlFor="clientType">Client Type</label>
                                 <input
                                     id="clientType"
                                     name="type"
@@ -309,10 +305,7 @@ function Clients() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="clientPhone">
-                                    Phone
-                                </label>
-
+                                <label htmlFor="clientPhone">Phone</label>
                                 <input
                                     id="clientPhone"
                                     name="phone"
@@ -324,10 +317,7 @@ function Clients() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="clientAddress">
-                                    Address
-                                </label>
-
+                                <label htmlFor="clientAddress">Address</label>
                                 <input
                                     id="clientAddress"
                                     name="address"
@@ -364,12 +354,10 @@ function Clients() {
                                         <div className="client-item-header">
                                             <div>
                                                 <h4>{client.name}</h4>
-
                                                 <span className="client-type">
                                                     {client.type}
                                                 </span>
                                             </div>
-
                                             <span className="client-status">
                                                 Active
                                             </span>
@@ -380,18 +368,15 @@ function Clients() {
                                                 <span className="detail-label">
                                                     PHONE
                                                 </span>
-
                                                 <p>
                                                     {client.phone ||
                                                         "Not provided"}
                                                 </p>
                                             </div>
-
                                             <div>
                                                 <span className="detail-label">
                                                     ADDRESS
                                                 </span>
-
                                                 <p>
                                                     {client.address ||
                                                         "Not provided"}
@@ -408,12 +393,8 @@ function Clients() {
                 {showHistory && (
                     <section className="dashboard-card history-card">
                         <div className="history-heading">
-                            <span className="eyebrow">
-                                ACTIVITY RECORDS
-                            </span>
-
+                            <span className="eyebrow">ACTIVITY RECORDS</span>
                             <h3>Client History</h3>
-
                             <p>
                                 Review material usage recorded for each
                                 customer.
@@ -425,7 +406,6 @@ function Clients() {
                                 <label htmlFor="selectedClient">
                                     Select Client
                                 </label>
-
                                 <select
                                     id="selectedClient"
                                     value={selectedClient}
@@ -437,10 +417,7 @@ function Clients() {
                                     }}
                                     required
                                 >
-                                    <option value="">
-                                        Choose a client
-                                    </option>
-
+                                    <option value="">Choose a client</option>
                                     {clients.map((client) => (
                                         <option
                                             key={client._id}
@@ -456,35 +433,17 @@ function Clients() {
                                 <label htmlFor="historyPeriod">
                                     Date Range
                                 </label>
-
                                 <select
                                     id="historyPeriod"
                                     value={historyPeriod}
                                     onChange={handlePeriodChange}
                                 >
-                                    <option value="10">
-                                        Last 10 days
-                                    </option>
-
-                                    <option value="30">
-                                        Last 1 month
-                                    </option>
-
-                                    <option value="180">
-                                        Last 6 months
-                                    </option>
-
-                                    <option value="365">
-                                        Last 1 year
-                                    </option>
-
-                                    <option value="all">
-                                        All history
-                                    </option>
-
-                                    <option value="custom">
-                                        Custom range
-                                    </option>
+                                    <option value="10">Last 10 days</option>
+                                    <option value="30">Last 1 month</option>
+                                    <option value="180">Last 6 months</option>
+                                    <option value="365">Last 1 year</option>
+                                    <option value="all">All history</option>
+                                    <option value="custom">Custom range</option>
                                 </select>
                             </div>
 
@@ -494,7 +453,6 @@ function Clients() {
                                         <label htmlFor="historyStart">
                                             From
                                         </label>
-
                                         <input
                                             id="historyStart"
                                             type="date"
@@ -510,10 +468,7 @@ function Clients() {
                                     </div>
 
                                     <div className="form-group">
-                                        <label htmlFor="historyEnd">
-                                            To
-                                        </label>
-
+                                        <label htmlFor="historyEnd">To</label>
                                         <input
                                             id="historyEnd"
                                             type="date"
@@ -540,9 +495,7 @@ function Clients() {
                             </button>
                         </form>
 
-                        {historyLoading && (
-                            <p>Fetching usage records...</p>
-                        )}
+                        {historyLoading && <p>Fetching usage records...</p>}
 
                         {!historyLoading &&
                             historySearched &&
@@ -556,16 +509,19 @@ function Clients() {
                                 </div>
                             )}
 
-
                         {!historyLoading && history.length > 0 && (
                             <div className="history-results">
                                 <div className="history-results-header">
                                     <div>
-                                        <span className="eyebrow">TRANSACTION SUMMARY</span>
+                                        <span className="eyebrow">
+                                            TRANSACTION SUMMARY
+                                        </span>
                                         <h4>Material Usage</h4>
-                                        <p>Recorded printing work for the selected client.</p>
+                                        <p>
+                                            Recorded printing work for the
+                                            selected client.
+                                        </p>
                                     </div>
-
                                     <div className="history-count">
                                         <span>RECORDS</span>
                                         <strong>{history.length}</strong>
@@ -581,26 +537,32 @@ function Clients() {
                                             <div className="history-record-icon">
                                                 <span>📄</span>
                                             </div>
-
                                             <div className="history-record-main">
                                                 <div className="history-record-title">
-                                                    <h5>{getProductName(transaction)}</h5>
-                                                    <span className="usage-badge">Material Used</span>
+                                                    <h5>
+                                                        {getProductName(
+                                                            transaction
+                                                        )}
+                                                    </h5>
+                                                    <span className="usage-badge">
+                                                        Material Used
+                                                    </span>
                                                 </div>
-
                                                 <p className="history-record-purpose">
                                                     {transaction.purpose ||
                                                         transaction.notes ||
                                                         "No purpose specified"}
                                                 </p>
-
                                                 <span className="history-record-date">
-                                                    {formatDate(transaction.createdAt)}
+                                                    {formatDate(
+                                                        transaction.createdAt
+                                                    )}
                                                 </span>
                                             </div>
-
                                             <div className="history-record-quantity">
-                                                <strong>{transaction.quantity}</strong>
+                                                <strong>
+                                                    {transaction.quantity}
+                                                </strong>
                                                 <span>
                                                     {transaction.unit ||
                                                         transaction.product?.unit ||
@@ -612,7 +574,6 @@ function Clients() {
                                 </div>
                             </div>
                         )}
-
                     </section>
                 )}
             </main>
