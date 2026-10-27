@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Select from "react-select";
 
-const API = import.meta.env.VITE_API || "http://localhost:5001/api";
+const API = import.meta.env.VITE_API_URL || "https://printstock.onrender.com/api";
 
 const selectStyles = {
     control: (base, state) => ({

@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API || "http://localhost:5001/api";
+const API = import.meta.env.VITE_API_URL || "https://printstock.onrender.com/api";
 
 
 async function apiFetch(url, options = {}) {
