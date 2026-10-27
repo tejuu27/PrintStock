@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Select from "react-select";
 
-const API = "http://localhost:5001/api";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
 const selectStyles = {
     control: (base, state) => ({
