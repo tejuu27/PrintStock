@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API = import.meta.env.VITE_API || "http://localhost:5001/api";
 
 
 async function apiFetch(url, options = {}) {
@@ -71,7 +71,7 @@ function Producers() {
             setLoading(true);
             setError("");
 
-            const data = await apiFetch(API_URL);
+            const data = await apiFetch(API);
             setProducers(data.producers || []);
         } catch (err) {
             setError(err.message || "Failed to load producers.");
@@ -101,7 +101,7 @@ function Producers() {
             setError("");
             setSuccess("");
 
-            await apiFetch(API_URL, {
+            await apiFetch(API, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -170,7 +170,7 @@ function Producers() {
             }
 
             const data = await apiFetch(
-                `${API_URL}/${selectedProducer}/history?${params.toString()}`
+                `${API}/${selectedProducer}/history?${params.toString()}`
             );
 
             setHistory(data.history || []);

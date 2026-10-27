@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+const API = import.meta.env.VITE_API || "http://localhost:5001/api";
 
 
 async function apiFetch(url, options = {}) {
@@ -67,7 +67,7 @@ function Clients() {
             setLoading(true);
             setError("");
 
-            const data = await apiFetch(API_URL);
+            const data = await apiFetch(API);
             setClients(data.clients || []);
         } catch (err) {
             setError(err.message || "Failed to load clients.");
@@ -97,7 +97,7 @@ function Clients() {
         setError("");
         setSuccess("");
 
-        const data = await apiFetch(API_URL, {
+        const data = await apiFetch(API, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -165,7 +165,7 @@ function Clients() {
         }
 
         const data = await apiFetch(
-            `${API_URL}/${selectedClient}/history?${params.toString()}`
+            `${API}/${selectedClient}/history?${params.toString()}`
         );
 
         setHistory(data.history || []);
